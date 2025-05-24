@@ -24,7 +24,7 @@ function parseDateDDMMYYYY(dateString: string): string | null {
 export default async function DashboardPage({
   searchParams: searchParamsFromProps,
 }: {
-  searchParams?: { page?: string; query?: string };
+  searchParams?: Promise<{ page?: string; query?: string }>;
 }) {
   const searchParams = await searchParamsFromProps;
   const supabase = await createClient();
@@ -47,7 +47,10 @@ export default async function DashboardPage({
         )
         .eq("invoice_date", parsedDate)
         .order("created_at", { ascending: false })
-        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
+        .range(
+          (currentPage - 1) * itemsPerPage,
+          currentPage * itemsPerPage - 1
+        );
 
       if (error) {
         console.error("Error fetching invoices by date:", error);
@@ -81,7 +84,10 @@ export default async function DashboardPage({
           )})`
         )
         .order("created_at", { ascending: false })
-        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
+        .range(
+          (currentPage - 1) * itemsPerPage,
+          currentPage * itemsPerPage - 1
+        );
 
       if (error) {
         console.error("Error fetching invoices by query:", error);
