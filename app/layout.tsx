@@ -11,6 +11,13 @@ export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: "S R Precision Tools - Invoicing",
   description: "Create and manage invoices for S R Precision Tools.",
+  icons: {
+    icon: {
+      url: "/invoice.png",
+      type: "image/png",
+      sizes: "32x32", // Recommended size for single favicon
+    },
+  },
 };
 
 const geistSans = Geist({
@@ -34,7 +41,9 @@ export default function RootLayout({
         >
           <main className="min-h-screen flex flex-col items-center">
             <div className="flex-1 w-full flex flex-col items-center">
-              <div className="flex flex-col max-w-5xl w-full"> {/* Removed gap-20, added w-full */}
+              <div className="flex flex-col max-w-5xl w-full">
+                {" "}
+                {/* Removed gap-20, added w-full */}
                 {children}
               </div>
             </div>

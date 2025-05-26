@@ -329,7 +329,6 @@ const InvoicePDFDocument = ({
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={{ flexGrow: 1 }}>
-          {" "}
           {/* Wrap main content */}
           {/* Header with Company Information */}
           <View style={styles.header}>
@@ -680,7 +679,7 @@ const InvoicePDFDocument = ({
               4. {companyProfile.termsCondition4}
             </Text>
           </View>
-        </View>{" "}
+        </View>
         {/* End of main content wrapper */}
         {/* Signature */}
         <View

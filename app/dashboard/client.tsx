@@ -59,6 +59,14 @@ export default function DashboardClient({
   const [invoiceTypeMap, setInvoiceTypeMap] = useState<
     Record<string, "original" | "duplicate" | "triplicate">
   >({});
+  // New state to track which invoice ID should trigger download
+  const [invoiceToDownload, setInvoiceToDownload] = useState<string | null>(
+    null
+  );
+  // State to track which invoice is currently being downloaded
+  const [downloadingInvoice, setDownloadingInvoice] = useState<string | null>(
+    null
+  );
 
   // Update displayed invoices and current page if props change (e.g., direct URL navigation)
   useEffect(() => {
@@ -67,8 +75,25 @@ export default function DashboardClient({
     setCurrentSearchQuery(initialQuery);
   }, [initialInvoices, initialCurrentPage, initialQuery]);
 
+  // New useEffect to trigger download when invoiceDataForPDF updates
+  useEffect(() => {
+    if (invoiceToDownload && invoiceDataForPDF[invoiceToDownload]) {
+      // Find and click the download button programmatically
+      const downloadButton = document.querySelector(
+        `[data-invoice-id="${invoiceToDownload}"] a`
+      );
+      if (downloadButton) {
+        (downloadButton as HTMLElement).click();
+      }
+      // Reset invoiceToDownload to prevent re-triggering
+      setInvoiceToDownload(null);
+    }
+  }, [invoiceDataForPDF, invoiceToDownload]);
+
   // Fetch full invoice data (including relations) for PDF generation
-  const fetchInvoiceDataForPDF = async (invoiceId: string) => {
+  const fetchInvoiceDataForPDF = async (
+    invoiceId: string
+  ): Promise<InvoiceWithRelationsForPDF | null> => {
     try {
       const { data, error } = await supabase
         .from("invoices")
@@ -84,21 +109,24 @@ export default function DashboardClient({
           error
         );
         // Optionally show a toast message to the user
-        return;
+        return null;
       }
 
       if (data) {
         console.log(`Fetched full data for invoice ${invoiceId}`);
+        const invoiceData = data as InvoiceWithRelationsForPDF;
         setInvoiceDataForPDF((prev) => ({
           ...prev,
-          [invoiceId]: data as InvoiceWithRelationsForPDF, // Cast to the correct type
+          [invoiceId]: invoiceData,
         }));
+        return invoiceData;
       } else {
         console.log(`No full data found for invoice ${invoiceId}.`);
-        // Handle case where invoice might have been deleted?
+        return null;
       }
     } catch (err) {
       console.error("Error in fetchInvoiceDataForPDF:", err);
+      return null;
     }
   };
 
@@ -235,26 +263,60 @@ export default function DashboardClient({
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={downloadingInvoice === invoice.id}
                           onClick={async () => {
-                            // Check if we already have the data
-                            if (!invoiceDataForPDF[invoice.id]) {
-                              // If not, fetch it first
-                              await fetchInvoiceDataForPDF(invoice.id);
-                            }
-
-                            // Small timeout to ensure state is updated
-                            setTimeout(() => {
-                              // Find the download button and click it programmatically
-                              const downloadButton = document.querySelector(
-                                `[data-invoice-id="${invoice.id}"] a`
-                              );
-                              if (downloadButton) {
-                                (downloadButton as HTMLElement).click();
+                            setDownloadingInvoice(invoice.id);
+                            try {
+                              if (!invoiceDataForPDF[invoice.id]) {
+                                const fetchedData =
+                                  await fetchInvoiceDataForPDF(invoice.id);
+                                if (fetchedData) {
+                                  // Small delay to ensure state update is processed
+                                  setTimeout(() => {
+                                    setInvoiceToDownload(invoice.id);
+                                    setDownloadingInvoice(null);
+                                  }, 600);
+                                } else {
+                                  setDownloadingInvoice(null);
+                                }
+                              } else {
+                                // If data already exists, set invoiceToDownload directly
+                                setInvoiceToDownload(invoice.id);
+                                setDownloadingInvoice(null);
                               }
-                            }, 100);
+                            } catch (error) {
+                              console.error("Download error:", error);
+                              setDownloadingInvoice(null);
+                            }
                           }}
                         >
-                          Download PDF
+                          {downloadingInvoice === invoice.id ? (
+                            <>
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Generating...
+                            </>
+                          ) : (
+                            "Download PDF"
+                          )}
                         </Button>
                       </div>
 
