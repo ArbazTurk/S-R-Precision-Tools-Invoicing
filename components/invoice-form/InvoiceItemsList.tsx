@@ -196,7 +196,7 @@ export default function InvoiceItemsList({
             </div>
 
             {/* Delete Button */}
-            <div className="col-span-12 md:col-span-1 flex items-center justify-end md:pt-6">
+            <div className="col-span-12 md:col-span-1 flex items-center justify-end">
               {items.length > 1 && (
                 <Button
                   type="button"

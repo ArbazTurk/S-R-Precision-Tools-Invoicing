@@ -117,14 +117,21 @@ export default async function DashboardPage({
 
   return (
     <div className="container mx-auto pt-8 pb-4 px-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold">Invoices Dashboard</h1>
-        <div className="flex gap-4">
-          <form action={signOutAction}>
-            <Button variant="outline">Logout</Button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Invoices Dashboard</h1>
+        <div className="flex w-full sm:w-auto justify-between sm:justify-end gap-2 sm:gap-4">
+          <form action={signOutAction} className="flex-shrink-0">
+            <Button variant="outline" size="sm" className="text-sm">Logout</Button>
           </form>
-          <Link href="/create-invoice">
-            <Button>Create New Invoice</Button>
+          <Link href="/create-invoice" className="flex-shrink-0">
+            <Button size="sm" className="text-sm flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              Create
+            </Button>
           </Link>
         </div>
       </div>

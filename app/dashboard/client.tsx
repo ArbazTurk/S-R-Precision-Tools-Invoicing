@@ -179,8 +179,8 @@ export default function DashboardClient({
         <InvoiceFilter onFilter={handleFilter} />
       </div>
 
-      {/* Invoices Table */}
-      <div className="overflow-x-auto rounded-lg border">
+      {/* Desktop View - Table */}
+      <div className="hidden md:block overflow-x-auto rounded-lg border">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -315,7 +315,25 @@ export default function DashboardClient({
                               Generating...
                             </>
                           ) : (
-                            "Download PDF"
+                            <>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="mr-2"
+                              >
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                              </svg>
+                              Download PDF
+                            </>
                           )}
                         </Button>
                       </div>
@@ -348,28 +366,197 @@ export default function DashboardClient({
           </tbody>
         </table>
       </div>
+
+      {/* Mobile View - Card Layout */}
+      <div className="md:hidden space-y-4">
+        {displayedInvoices.length > 0 ? (
+          displayedInvoices.map((invoice) => (
+            <div key={invoice.id} className="bg-white shadow-md rounded-lg p-4">
+              <div className="mb-3">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-semibold text-gray-800">
+                    {invoice.invoice_number}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {formatDateDDMMYYYY(invoice.invoice_date)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mb-1">
+                  {invoice.billed_client?.name || "-"}
+                </p>
+                <p className="text-sm font-medium text-gray-700">
+                  ₹{invoice.total_amount_after_tax?.toFixed(2) || "-"}
+                </p>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Link href={`/invoice/${invoice.id}/edit`} className="w-full">
+                  <Button variant="outline" className="w-full text-sm">
+                    View/Edit
+                  </Button>
+                </Link>
+                <div className="relative w-full">
+                  <select
+                    className="w-full border rounded py-1 text-center text-sm font-medium bg-white text-black border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={invoiceTypeMap[invoice.id] || "original"}
+                    onChange={(e) => {
+                      setInvoiceTypeMap((prev) => ({
+                        ...prev,
+                        [invoice.id]: e.target.value as
+                          | "original"
+                          | "duplicate"
+                          | "triplicate",
+                      }));
+                    }}
+                  >
+                    <option value="original">Original</option>
+                    <option value="duplicate">Duplicate</option>
+                    <option value="triplicate">Triplicate</option>
+                  </select>
+                  {/* <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </span> */}
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full text-sm flex items-center justify-center"
+                  disabled={downloadingInvoice === invoice.id}
+                  onClick={async () => {
+                    setDownloadingInvoice(invoice.id);
+                    try {
+                      if (!invoiceDataForPDF[invoice.id]) {
+                        const fetchedData = await fetchInvoiceDataForPDF(
+                          invoice.id
+                        );
+                        if (fetchedData) {
+                          setTimeout(() => {
+                            setInvoiceToDownload(invoice.id);
+                            setDownloadingInvoice(null);
+                          }, 600);
+                        } else {
+                          setDownloadingInvoice(null);
+                        }
+                      } else {
+                        setInvoiceToDownload(invoice.id);
+                        setDownloadingInvoice(null);
+                      }
+                    } catch (error) {
+                      console.error("Download error:", error);
+                      setDownloadingInvoice(null);
+                    }
+                  }}
+                >
+                  {downloadingInvoice === invoice.id ? (
+                    <>
+                      <svg
+                        className="animate-spin mr-2 h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="mr-2"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      Download PDF
+                    </>
+                  )}
+                </Button>
+                {/* Hidden download button for mobile */}
+                <div className="hidden" data-invoice-id={invoice.id}>
+                  {invoiceDataForPDF[invoice.id] && (
+                    <PDFDownloadButton
+                      invoiceData={invoiceDataForPDF[invoice.id]}
+                      invoiceType={invoiceTypeMap[invoice.id] || "original"}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="bg-white shadow-md rounded-lg p-4 text-center text-sm text-gray-500">
+            No invoices found matching your search
+          </div>
+        )}
+      </div>
       {/* Pagination Controls */}
       {totalInvoices > 0 && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
-          <div className="flex flex-1 justify-between sm:hidden">
-            <Button
-              onClick={prevPage}
-              disabled={currentPage === 1}
-              variant="outline"
-              size="sm"
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={nextPage}
-              disabled={currentPage === totalPages}
-              variant="outline"
-              size="sm"
-            >
-              Next
-            </Button>
+        <div className="border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg">
+          {/* Mobile pagination */}
+          <div className="flex justify-between items-center mb-3 md:hidden">
+            <p className="text-xs text-gray-700">
+              {Math.min(indexOfFirstInvoice + 1, totalInvoices)}-
+              {Math.min(indexOfLastInvoice, totalInvoices)} of {totalInvoices}
+            </p>
+            <div className="flex space-x-2">
+              <Button
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                variant="outline"
+                size="sm"
+                className="px-2 py-1 h-8 min-w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="flex items-center text-sm font-medium">
+                {currentPage} / {totalPages}
+              </span>
+              <Button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                variant="outline"
+                size="sm"
+                className="px-2 py-1 h-8 min-w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+
+          {/* Desktop pagination */}
+          <div className="hidden md:flex md:flex-1 md:items-center md:justify-between">
             <div>
               <p className="text-sm text-gray-700">
                 Showing{" "}
